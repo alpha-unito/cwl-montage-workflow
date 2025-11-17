@@ -1,12 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-requirements:
-  ShellCommandRequirement: {}
 baseCommand: [ mDiffFit ]
-arguments:
-- position: 8
-  valueFrom: "|| true"
-  shellQuote: false
 inputs:
   in_1_fits:
     type: File
@@ -35,8 +29,20 @@ inputs:
     inputBinding:
       position: 2
       prefix: -d
+stdout: mDiffFit.out
 outputs:
   status_fits:
     type: File
     outputBinding:
       glob: "$(inputs.statusfile)"
+  log_out: 
+    type: string
+    outputBinding:
+      glob: mDiffFit.out
+      loadContents: true
+      outputEval: $(self[0].contents)
+  return_code:
+    type: int
+    outputBinding:
+      outputEval: $(runtime.exitCode)
+successCodes: [0, 1]

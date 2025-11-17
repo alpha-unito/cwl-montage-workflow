@@ -6,6 +6,7 @@ inputs:
     type:
       type: record
       fields:
+        bid: int
         survey: 
           type: string
           inputBinding: 

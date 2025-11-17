@@ -3,7 +3,6 @@ class: Workflow
 requirements:
   ScatterFeatureRequirement: {}
   SubworkflowFeatureRequirement: {}
-  StepInputExpressionRequirement: {}
 
 inputs:
   center: string

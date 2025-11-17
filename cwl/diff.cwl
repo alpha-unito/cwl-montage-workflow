@@ -11,6 +11,9 @@ outputs:
   status_fits: 
     type: File?
     outputSource: mDiffFit/status_fits
+  is_valid:
+    type: boolean
+    outputSource: check_output/is_valid
 steps:
   get_diff:
     run: clt/get_diff.cwl 
@@ -37,4 +40,12 @@ steps:
       statusfile:
         valueFrom: "$(inputs.band_id)-fit.$(inputs.diff_name.replace(/(diff.|.fits)/g, '')).txt"
     when: "$(inputs.diff_name !== '')"
-    out: [status_fits]
+    out: [status_fits, log_out, return_code]
+
+  check_output:
+    run: et/check_out.cwl 
+    in: 
+      return_code: mDiffFit/return_code
+      log_out: mDiffFit/log_out
+    out: [is_valid]
+    when: "$(Number.isInteger(inputs.return_code) && inputs.return_code !== 0)"
