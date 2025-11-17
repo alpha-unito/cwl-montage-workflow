@@ -1,5 +1,8 @@
 cwlVersion: v1.2
 class: CommandLineTool
+requirements:
+  NetworkAccess:
+    networkAccess: true
 baseCommand: [ mArchiveList ]
 inputs:
   band:

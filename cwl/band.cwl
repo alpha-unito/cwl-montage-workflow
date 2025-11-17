@@ -28,7 +28,6 @@ outputs:
   out_png: 
     type: File
     outputSource: mViewer/out_png
-
 steps:
   mArchiveList:
     run: clt/mArchiveList.cwl
@@ -78,20 +77,18 @@ steps:
       images_tbl: mArchiveList/images_tbl
     out: [ urls ]
 
-  download:
-    run: download_and_extract.cwl 
+  mArchiveGet:
+    run: clt/mArchiveGet.cwl 
     in:
       data: retrieve_urls/urls 
-    out: [ image ]
+    out: [ image_fits ]
     scatter: data 
-  # TODO: The `mProject` step can be added inside the `download_and_extract` subworkflow
-  # to avoid multiple scatter-gather cycles and instead have a single scatter-gather cycle.
 
   mProject:
     run: clt/mProject.cwl
     in:
       template: region_oversized
-      in_fits: download/image
+      in_fits: mArchiveGet/image_fits
       out_name:
         valueFrom: "p$(inputs.in_fits.nameroot)"
     out: [out_fits]
