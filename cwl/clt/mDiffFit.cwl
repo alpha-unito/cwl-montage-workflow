@@ -36,11 +36,7 @@ outputs:
     outputBinding:
       glob: "$(inputs.statusfile)"
   log_out: 
-    type: string
-    outputBinding:
-      glob: mDiffFit.out
-      loadContents: true
-      outputEval: $(self[0].contents)
+    type: stdout
   return_code:
     type: int
     outputBinding:
