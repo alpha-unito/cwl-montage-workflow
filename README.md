@@ -14,7 +14,7 @@ pip install cwlref-runner
 
 You need Docker because some steps rely on images that contain essential tools, such as AstroPy.
 
-Additionally, you must install the Montage tools and ensure they are available in your environment. Follow the [istructions](http://montage.ipac.caltech.edu/docs/download2.html) to install them.
+Additionally, you must install the Montage tools and ensure they are available in your environment. Follow the [instructions](http://montage.ipac.caltech.edu/docs/download2.html) to install them.
 
 The data is downloaded automatically during the workflow. If you wish to change the dataset, you can modify the config.json file. The current configuration is based on the example provided in the [Pegasus Montage workflow implementation](https://github.com/pegasus-isi/montage-workflow-v3).
 
