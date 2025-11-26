@@ -7,20 +7,22 @@ requirements:
   StepInputExpressionRequirement: {}
 
 inputs:
-  center: string
-  degrees: float
+  band_id: int
+  corrected_tbl: File
+  diff_tbl: File 
+  images_fits: File[]
+  images_tbl: File
   n_iter: int
-  band:
-    type:
-      type: record
-      fields:
-        bid: int
-        survey: string
-        band: string
-        color: string
-  region: File
+  projected_tbl: File
+  region: File 
   region_oversized: File
-
+  statfile: File
+  mProject_prefix:
+    type: string 
+    default: "p"
+  mBackground_prefix:
+    type: string 
+    default: "c"
 outputs: 
   out_fits: 
     type: File 
@@ -29,79 +31,24 @@ outputs:
     type: File
     outputSource: mViewer/out_png
 steps:
-  mArchiveList:
-    run: clt/mArchiveList.cwl
-    in:
-      band: band
-      object_location: center
-      degrees: degrees
-      width: 
-        valueFrom: "$(inputs.degrees * 1.42)" 
-      height: 
-        valueFrom: "$(inputs.degrees * 1.42)" 
-      outfile:
-        valueFrom: "$(inputs.band.bid)-images.tbl"
-    out: [ images_tbl ]
-
-  mDAGTbls:
-    run: clt/mDAGTbls.cwl
-    in:
-      images_tbl: mArchiveList/images_tbl
-      region: region_oversized
-      band: band
-      band_id:
-        valueFrom: "$(inputs.band.bid)"
-    out: [ raw_tbl, projected_tbl, corrected_tbl ]
-  
-  mOverlaps:
-    run: clt/mOverlaps.cwl
-    in:
-      raw_tbl: mDAGTbls/raw_tbl
-      band: band
-      band_id:
-        valueFrom: "$(inputs.band.bid)"
-    out: [ diff_tbl ]
-
-  generate_statfile:
-    run: clt/generate_statfile.cwl 
-    in:
-      diff_tbl: mOverlaps/diff_tbl
-      band: band
-      band_id:
-        valueFrom: "$(inputs.band.bid)"
-    out: [ statfile ]
-
-  retrieve_urls:
-    run: clt/retrieve_urls.cwl
-    in: 
-      images_tbl: mArchiveList/images_tbl
-    out: [ urls ]
-
-  mArchiveGet:
-    run: clt/mArchiveGet.cwl 
-    in:
-      data: retrieve_urls/urls 
-    out: [ image_fits ]
-    scatter: data 
-
   mProject:
     run: clt/mProject.cwl
     in:
       template: region_oversized
-      in_fits: mArchiveGet/image_fits
+      in_fits: images_fits
+      mProject_prefix: mProject_prefix
       out_name:
-        valueFrom: "p$(inputs.in_fits.nameroot)"
+        valueFrom: "$(inputs.mProject_prefix)$(inputs.in_fits.nameroot)"
     out: [out_fits]
     scatter: in_fits
 
   wdiff:
     in:
-      band: band
-      band_id:
-        valueFrom: "$(inputs.band.bid)"
+      band_id: band_id
+      mProject_prefix: mProject_prefix
       in_1_fits: mProject/out_fits
       in_2_fits: mProject/out_fits
-      diff_tbl: mOverlaps/diff_tbl
+      diff_tbl: diff_tbl
       region_oversized: region_oversized
     out: [status_fits]
     run: 
@@ -111,6 +58,7 @@ steps:
         in_1_fits: File[]
         in_2_fits: File[]
         diff_tbl: File
+        mProject_prefix: string
         region_oversized: File
       outputs:
         status_fits:
@@ -122,6 +70,7 @@ steps:
           run: diff.cwl
           in:
             band_id: band_id
+            mProject_prefix: mProject_prefix
             in_1_fits: in_1_fits
             in_2_fits: in_1_fits
             diff_tbl: diff_tbl
@@ -133,10 +82,10 @@ steps:
   mConcatFit:
     run: clt/mConcatFit.cwl
     in:
-      statfiles_tbl: generate_statfile/statfile
-      band: band 
+      statfiles_tbl: statfile
+      band_id: band_id 
       fits_tbl: 
-        valueFrom: "$(inputs.band.bid)-fits.tbl"
+        valueFrom: "$(inputs.band_id)-fits.tbl"
       statutes: wdiff/status_fits
       statdir: 
         valueFrom: "${return {'class': 'Directory', 'basename': 'data', 'listing': inputs.statutes}}"
@@ -145,21 +94,22 @@ steps:
   mBgModel:
     run: clt/mBgModel.cwl 
     in:
-      images_tbl: mArchiveList/images_tbl
+      images_tbl: images_tbl
       fits_tbl: mConcatFit/out_fits
       n_iter: n_iter
-      band: band
+      band_id: band_id
       out_name:
-        valueFrom: "$(inputs.band.bid)-corrections.tbl"
+        valueFrom: "$(inputs.band_id)-corrections.tbl"
     out: [corrections_tbl]
 
   mBackground:
     run: clt/mBackground.cwl
     in:
       in_fits: mProject/out_fits
+      mBackground_prefix: mBackground_prefix
       out_name: 
-        valueFrom: "c$(inputs.in_fits.nameroot.substring(1))"
-      projected_tbl: mDAGTbls/projected_tbl
+        valueFrom: "$(inputs.mBackground_prefix)$(inputs.in_fits.nameroot.substring(1))"
+      projected_tbl: projected_tbl
       corrections_tbl: mBgModel/corrections_tbl
     out: [out_fits]
     scatter: in_fits
@@ -171,9 +121,9 @@ steps:
       in_dir: 
         valueFrom: "${return {'class': 'Directory', 'basename': 'data', 'listing': inputs.cfits}}"
       out_name: 
-        valueFrom: "$(inputs.band.bid)-updated.corrected.tbl"
-      band: band 
-      imglist: mDAGTbls/corrected_tbl
+        valueFrom: "$(inputs.band_id)-updated.corrected.tbl"
+      band_id: band_id
+      imglist: corrected_tbl
     out: [out_table]
 
   mAdd:
@@ -181,9 +131,9 @@ steps:
     in:
       image: mImgtbl/out_table
       template: region
-      band: band
+      band_id: band_id
       out_name: 
-        valueFrom: "$(inputs.band.bid)-mosaic"
+        valueFrom: "$(inputs.band_id)-mosaic"
       in_fits: mBackground/out_fits
     out: [out_fits]
 

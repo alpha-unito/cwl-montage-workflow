@@ -21,7 +21,6 @@ inputs:
     type: string 
     inputBinding: 
       position: 4
-    default: "p"
 outputs:
   diff_name: string
 requirements:

@@ -7,13 +7,14 @@ inputs:
   in_2_fits: File
   diff_tbl: File
   region_oversized: File
+  mProject_prefix: string
 outputs: 
   status_fits: 
     type: File?
     outputSource: mDiffFit/status_fits
   is_valid:
     type: boolean
-    outputSource: check_output/is_valid
+    outputSource: check_mDiffFit_out/is_valid
 steps:
   get_diff:
     run: clt/get_diff.cwl 
@@ -25,6 +26,7 @@ steps:
       in_2_name: 
         valueFrom: "$(inputs.in_2_fits.basename)"
       diff_tbl: diff_tbl
+      prefix_project: mProject_prefix
     out: [diff_name]
 
   mDiffFit:
@@ -42,8 +44,8 @@ steps:
     when: "$(inputs.diff_name !== '')"
     out: [status_fits, log_out, return_code]
 
-  check_output:
-    run: et/check_out.cwl 
+  check_mDiffFit_out:
+    run: et/check_mDiffFit_out.cwl 
     in: 
       return_code: mDiffFit/return_code
       log_out: mDiffFit/log_out
