@@ -5,6 +5,7 @@ requirements:
   InlineJavascriptRequirement: {}
   ScatterFeatureRequirement: {}
   StepInputExpressionRequirement: {}
+  SubworkflowFeatureRequirement: {}
 
 inputs:
   band_id: int
